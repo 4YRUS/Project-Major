@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+
+{% block content%}
+
+
+<div  class="contains" style="height: 100vh; width: 100vw; display: flex; flex-direction: column; justify-content: space-around; align-items: center;">
+	<canvas id='board' height="500" width="1000" style="margin-top: 20px; background-color: white; border : 4px solid Gray;  border-radius: 30px"></canvas>
+	<div class="buttons" style="display: flex; margin: 10px; ">
+		<a class="btn btn-secondary button2" style="margin-right: 10px;">READ DRAWINGS</a>
+	</div>
+	<div class="response" style=" width: 66.25vw; border: 4px solid gray ; border-radius: 30px; display: flex; 
+	align-items: center; justify-content: center; color: white; padding: 10px;"><span class="TEXTBOX" style="font-size: 20px;">{{message}}</span></div>
+</div>
+
+<form method="POST" style="display: none;">
+	{% csrf_token %}
+	<input type="" id="image" name="image">
+	<button id="submit"></button>
+</form>
+
+
+<script type="text/javascript">
+
+
+
+	const canvas = document.querySelector("#board");
+	const ctx = canvas.getContext("2d");
+	
+	let button2 = document.querySelector(".button2");
+	let output = document.querySelector(".response");
+	let submit = document.querySelector("#submit");
+	let input = document.querySelector("#image");
+	
+
+	function setCanvasBackground(color) {
+      ctx.fillStyle = "white"; 
+    	ctx.fillRect(0, 0, canvas.width, canvas.height); 
+   	}
+
+   setCanvasBackground('abs')
+
+	
+
+	button2.addEventListener("click",e=>{
+		
+		let url = canvas.toDataURL("image/png")
+		image.value=url 
+		submit.click()
+
+	})
+
+	ctx.lineWidth=1
+	ctx.lineCap="round"
+
+	
+
+	var object = canvas.getBoundingClientRect();
+	object = canvas.getBoundingClientRect()
+	let drawing = false;
+	
+	function draw(event,x,y){
+		if (drawing){
+			ctx.lineTo(x,y)
+			ctx.stroke()
+		}
+		
+	}
+	canvas.addEventListener("mousedown",e=>{
+		ctx.moveTo((e.offsetX),(e.offsetY))
+		drawing=true;
+		
+	})
+	canvas.addEventListener("mouseup",e=>{
+		drawing=false;
+		
+	})
+	canvas.addEventListener("mousemove",e=>{
+		draw(e,(e.offsetX),(e.offsetY))
+	})
+
+	
+</script>
+
+{% endblock %}
