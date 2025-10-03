@@ -24,6 +24,7 @@ class Product(models.Model):
 	def __str__(self):
 		return self.name
 
+
 class Order(models.Model):
 	address = models.CharField(max_length=200)
 	parent = models.ForeignKey(Customer,on_delete=models.CASCADE,blank=True,null=True)
@@ -32,8 +33,30 @@ class Order(models.Model):
 	def __str__(self):
 		return "Order of "+self.parent.name  
 
+
 class Images(models.Model):
 	image = models.ImageField(null=True,blank=True,upload_to="pics/")
+
+
+class PDFs(models.Model):
+	pdf = models.FileField(null=True,blank=True,upload_to="pdfs/")
+
+
+class Topic(models.Model):
+	name = models.CharField(max_length=100)
+
+	def __str__(self):
+		return self.name
+
+
+class SubTopic(models.Model):
+	topic = models.ForeignKey(Topic, on_delete= models.CASCADE)
+	name = models.CharField(max_length=100)
+	description = models.CharField(max_length= 10000)
+
+	def __str__(self):
+		return self.name + " for " + self.topic.name 
+
 	
 
 

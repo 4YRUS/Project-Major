@@ -13,8 +13,14 @@
 		<a class="btn btn-secondary button4" style="margin-right: 10px;"><i class="bi bi-x-circle"></i></a>
 	</div>
 	<div class="response" style=" width: 66.25vw; border: 4px solid gray ; border-radius: 30px; display: flex; 
-	align-items: center; justify-content: center; color: white; padding: 10px;"><span class="TEXTBOX" style="font-size: 20px;"></span></div>
+	align-items: center; justify-content: center; color: white; padding: 10px;"><span class="TEXTBOX" style="font-size: 20px;">{{message}}</span></div>
 </div>
+
+<form method="POST" style="display: none;">
+	{% csrf_token %}
+	<input type="" id="image" name="image">
+	<button id="submit"></button>
+</form>
 
 
 <script type="text/javascript">
@@ -31,36 +37,6 @@
 	let output = document.querySelector(".response");
 	let submit = document.querySelector("#submit");
 	let input = document.querySelector("#image");
-	let textbox = document.querySelector(".TEXTBOX");
-
-
-	fetch('http://127.0.0.1:8000/canvasResponse/')
-    .then(response=>{
-    	return response.json()
-    })
-    .then(data=>{
-    	console.log(data)
-    	textbox.innerText = data.message
-    })
-    .catch(error =>{
-    	console.log(error)
-    })
-
-	function getCookie(name) {
-	      let cookieValue = null;
-	      if (document.cookie && document.cookie !== '') {
-	          const cookies = document.cookie.split(';');
-	          for (let i = 0; i < cookies.length; i++) {
-	              const cookie = cookies[i].trim();
-	              // Does this cookie string begin with the name we want?
-	              if (cookie.substring(0, name.length + 1) === (name + '=')) {
-	                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-	                  break;
-	            }
-	        }
-	    }
-	    return cookieValue;
-	}
 	
 
 	function setCanvasBackground(color) {
@@ -74,32 +50,9 @@
 
 	button2.addEventListener("click",e=>{
 		
-		let imagedata = canvas.toDataURL("image/png")
-		let data = {
-            	image : imagedata,
-            }
-
-        console.log(data)
-
-		fetch('http://127.0.0.1:8000/canvasResponse/',{
-        	method : 'post',
-        	headers : {
-        		'X-CSRFToken' : getCookie("csrftoken"),
-        	},
-        	body : JSON.stringify(data)	
-        })
-        .then(response=>{
-        	return response.json()
-        })
-        .then(data=>{
-        	console.log(data)
-        	textbox.innerText = data.message
-
-        })
-        .catch(error =>{
-        	console.log(error)
-        })
-
+		let url = canvas.toDataURL("image/png")
+		image.value=url 
+		submit.click()
 
 	})
 

@@ -1,0 +1,190 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.forms import UserCreationForm
+import random
+from django.http import JsonResponse, HttpResponse
+from .imagereader import read_image
+from .TextGeneration import read_pdf,get_mcqs
+import base64
+from .models import Customer, Product, Order, Tag, Images, Topic, SubTopic,PDFs
+from django.core.files.base import ContentFile
+import json 
+import time
+
+
+def read_canvas(path):
+    text = read_image(path)
+    print(text)
+    return text
+
+
+def return_canvas_response(request):
+    message = "Hey Ssup??!! Draw or Write any thing, let me guess"
+    if request.method=='POST':
+        try:
+            message = "HELLO IT HAS COME HERE"
+
+            print(f"\n\n\n {message} \n\n\n")
+
+            imagedata = json.loads(request.body).get('image')
+
+            a,imagestring = imagedata.split(';base64,')
+
+            image = ContentFile(base64.b64decode(imagestring),name='firstimage.png')
+
+            obj1 = Images.objects.create(image = image)
+
+            
+            image_url = obj1.image.url
+
+            try:
+
+                message = read_canvas("C:\\Users\\bss22\\OneDrive\\Desktop\\Don't Open\\DJANGO\\work\\" + image_url)
+                
+                print(f"\n\n\n {message} \n\n\n")
+
+                obj1.delete()
+
+                return JsonResponse({"message": message})
+            except:
+                obj1.delete()
+                return JsonResponse({"message":"Sorry, There was an error. "})
+        except:
+            return JsonResponse({"Error" : "Not Valid Form"})
+
+
+    return JsonResponse({"message":message})
+
+
+def home(request):
+    # text = "Hey Ssup??!! Draw or Write any thing, let me guess"
+    # image_url = ""
+    # if request.method == "POST":
+    #     filename = 'uploaded_image.png'  
+    #     image_data = base64.b64decode(request.POST['image'].split("base64,")[1])
+    #     image_file = ContentFile(image_data, name=filename)
+    #     uploaded_image = Images.objects.create(image=image_file)
+    #     image_url = uploaded_image.image.url
+    #     print("\n\n\n", image_url, "\n\n\n")
+    #     text = read_canvas("C:\\Users\\bss22\\OneDrive\\Desktop\\Don't Open\\DJANGO\\work\\" + image_url)
+    return render(request, 'home.html')
+
+
+def work1(request):
+    return render(request, 'work1.html', {})
+
+
+def forfetch(request):
+    if request.method == "GET":
+        # image = Images.objects.all()[0].image.url
+        return JsonResponse({"message": "hello world"})
+
+
+def extractedData(request,pk):
+    data = {'topic': 'Introduction to Cloud Computing', 'important_topics': [{'title': 'Cloud Computing Definition', 'description': "Hello"}]}
+
+    # topic_obj = Topic(name = topic)
+    # topic_obj.save()
+
+    # for dict1 in subtopics:
+    #     subtopic_obj = SubTopic(name = dict1['title'], description = dict1['description'], topic = topic_obj)
+    #     subtopic_obj.save()
+
+    obj1 = Topic.objects.get(id = pk)
+    obj2 = SubTopic.objects.filter(topic = obj1).values()
+    obj2 = list(obj2)
+
+    data['topic'] = obj1.name 
+    data['important_topics'] = obj2
+
+    return JsonResponse(data)
+
+
+def extractData(request):
+
+    if request.method == "POST":
+        try:
+            
+            doc = PDFs(pdf=request.FILES['pdf'])
+            doc.save()
+
+            print("\n\n\n",doc.pdf.url,"\n\n\n")
+
+            pdf_url = doc.pdf.url 
+
+            topic, subtopics = read_pdf("C:\\Users\\bss22\\OneDrive\\Desktop\\Don't Open\\DJANGO\\work\\" + pdf_url)
+
+            topic_obj = Topic(name = topic)
+            topic_obj.save()
+
+            for dict1 in subtopics:
+                subtopic_obj = SubTopic(name = dict1['title'], description = dict1['description'], topic = topic_obj)
+                subtopic_obj.save()
+                
+        except:
+            return JsonResponse({"message":"Error has occurred", "flag" : False, "id" : None})
+
+    return JsonResponse({"message":"Successfully Completed", "flag" : True, "id" : topic_obj.id})
+
+
+
+def getTopics(request):
+    topics = Topic.objects.all().values()
+    topics = list(topics)[::-1]
+    return JsonResponse({"data":topics})
+
+
+def pdfExtraction(request,pk):
+    return render(request, 'pdfextraction.html',{"id":pk})
+
+
+
+def pdfExtractionHome(request):
+    return render(request, 'pdfextractionhome.html')
+
+
+def getPdfs(request):
+    pdfs = PDFs.objects.all().values()
+    pdfs = list(pdfs)[::-1]
+    return JsonResponse({"data":pdfs})
+
+def extractMcqs(request):
+
+    if request.method == "POST":
+
+        try:
+            doc = PDFs(pdf=request.FILES['pdf'])
+            doc.save()
+
+            print("\n\n\n",doc.pdf.url,"\n\n\n")
+
+            pdf_url = doc.pdf.url 
+
+            data = get_mcqs("C:\\Users\\bss22\\OneDrive\\Desktop\\Don't Open\\DJANGO\\work\\" + pdf_url)
+
+            request.session['mcq-questions'] = data 
+
+            return redirect("McqTest")
+
+        except:
+            return JsonResponse({"message":"Error has occurred", "flag" : False, "id" : None})
+
+    return JsonResponse({"message":"Successfully Completed", "flag" : True, "id" : topic_obj.id})
+
+
+
+def mcqTestHome(request):
+    return render(request, 'mcqTestHome.html')
+
+def mcqTest(request):
+
+    if request.method == "POST":
+        
+        data = {'topic': 'Data Structures and Data Manipulation in C#', 'description': 'This module covers fundamental data structures like arrays, lists, dictionaries, sets, queues, and linked lists in C#. It also delves into string manipulation, various types of string and character literals, and comprehensive data formatting for numeric, date, and time values, including standard and custom format specifiers. Finally, it details methods for converting strings to other data types.', 'mcqs': [{'question': 'Which of the following statements about C# arrays is FALSE?', 'options': ['A) All arrays in C# are dynamically allocated.', 'B) A C# array variable can be declared with `[]` after the data type.', 'C) Once created, the size of a C# array can be changed dynamically.', 'D) C# arrays are objects of base type `System.Array`.'], 'answer': 'C) Once created, the size of a C# array can be changed dynamically.'}, {'question': 'Which of the following is NOT a type of collection explicitly listed as provided by the .NET Framework in the context of storing and manipulating groups of related objects in C# within the given content?', 'options': ['A) Lists', 'B) Dictionaries', 'C) Linked Lists', 'D) Trees'], 'answer': 'D) Trees'}, {'question': 'What is a key characteristic of `HashSet` in C#?', 'options': ['A) Elements are stored in ascending sorted order.', 'B) It allows duplicate elements.', 'C) It stores unique elements and uses a hash table for storage.', 'D) The order of elements is always preserved as they are added.'], 'answer': 'C) It stores unique elements and uses a hash table for storage.'}, {'question': 'In C#, what happens when you perform an operation that appears to modify an existing `string` object?', 'options': ['A) The original string object is modified in place.', 'B) A new string object is created with the modifications.', 'C) An error is thrown because strings are immutable.', 'D) The operation is deferred until the string is explicitly saved.'], 'answer': 'B) A new string object is created with the modifications.'}, {'question': 'Which type of string literal in C# allows including special characters like backslashes without the need for escape sequences?', 'options': ['A) Double-quoted literals', 'B) Interpolated strings', 'C) Verbatim string literals', 'D) Character literals'], 'answer': 'C) Verbatim string literals'}, {'question': 'Which standard numeric format specifier in C# multiplies a number by 100 and displays it with a percent symbol?', 'options': ['A) "N"', 'B) "F"', 'C) "D"', 'D) "P"'], 'answer': 'D) "P"'}, {'question': 'In custom numeric formatting, what is the behavior of the "#" custom specifier if a digit is NOT present in its corresponding position in the value being formatted?', 'options': ['A) A zero is displayed in that position.', 'B) Nothing is stored in that position in the result string.', 'C) An exception is thrown.', 'D) The next available digit is shifted into that position.'], 'answer': 'B) Nothing is stored in that position in the result string.'}, {'question': 'What C# structure represents a time interval, such as the difference between two `DateTime` objects or a specific duration?', 'options': ['A) `DateInterval`', 'B) `Duration`', 'C) `TimeSpan`', 'D) `DateTimeOffset`'], 'answer': 'C) `TimeSpan`'}, {'question': 'Which standard date and time format specifier in C# would you use to get an output like "Monday, April 29, 2024 1:30:00 PM"?', 'options': ["A) 'f'", "B) 'F'", "C) 'g'", "D) 'G'"], 'answer': "B) 'F'"}, {'question': 'To convert a string representation of an integer, for example, "123", into an `int` type in C#, which method is typically used?', 'options': ['A) `int.Convert()`', 'B) `int.ToInteger()`', 'C) `int.Parse()`', 'D) `Convert.ToInt()`'], 'answer': 'C) `int.Parse()`'}]}
+        data = request.session['mcq-questions']
+        return JsonResponse(data)
+
+    return render(request,'mcqTest.html')
+
+
